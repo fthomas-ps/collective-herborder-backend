@@ -1,0 +1,19 @@
+spring:
+  application:
+      name: herborder
+  # Please provide the real credentials in the environment variables
+  # SPRING_DATASOURCE_USERNAME and SPRING_DATASOURCE_PASSWORD
+  datasource:
+    url: jdbc:postgresql://herbs.postgres.database.azure.com:5432/herborders
+    username: db-user
+    password: db-password
+    driver-class-name: org.postgresql.Driver
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+
+# Please provide the real credentials in the environment variables
+# FLYWAY_DATASOURCE_USERNAME and FLYWAY_DATASOURCE_PASSWORD
+flyway.datasource:
+  url: jdbc:postgresql://herbs.postgres.database.azure.com:5432/herborders
+  username: flyway-user
+  password: flyway-password

@@ -1,0 +1,30 @@
+server:
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+      name: herborder
+  datasource:
+    url: jdbc:postgresql://localhost:5435/herborders
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: mail-user
+    password: mail-password
+    properties.mail.smtp:
+      auth: tls
+      starttls.enable: true
+
+# Please provide the real credentials in the environment variables
+# FLYWAY_DATASOURCE_USERNAME and FLYWAY_DATASOURCE_PASSWORD
+flyway.datasource:
+  url: jdbc:postgresql://localhost:5435/herborders
+  username: postgres
+  password: postgres
+
