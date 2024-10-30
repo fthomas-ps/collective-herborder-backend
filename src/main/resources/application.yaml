@@ -13,7 +13,7 @@ spring:
   jackson:
     property-naming-strategy: SNAKE_CASE
   mail:
-    host: smtp.gmail.com
+    host: sandbox.smtp.mailtrap.io
     port: 587
     username: mail-user
     password: mail-password

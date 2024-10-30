@@ -24,15 +24,9 @@ public class GlobalExceptionHandler {
     protected ResponseEntity<Object> handleEntityNotFound(
         HttpServletRequest request,
         EntityNotFoundException exception) {
-        if (useProblemResponse(request)) {
-            ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
-            return ResponseEntity
-                .badRequest()
-                .body(problem);
-        }
         return ResponseEntity
-            .badRequest()
-            .body(exception.getMessage());
+            .notFound()
+            .build();
     }
 
     @ExceptionHandler(value = {ValidationException.class})

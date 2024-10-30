@@ -10,6 +10,14 @@ spring:
     driver-class-name: org.postgresql.Driver
   jackson:
     property-naming-strategy: SNAKE_CASE
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: mail-user
+    password: mail-password
+    properties.mail.smtp:
+      auth: tls
+      starttls.enable: true
 
 # Please provide the real credentials in the environment variables
 # FLYWAY_DATASOURCE_USERNAME and FLYWAY_DATASOURCE_PASSWORD
