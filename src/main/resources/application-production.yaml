@@ -18,6 +18,9 @@ spring:
     properties.mail.smtp:
       auth: tls
       starttls.enable: true
+  security.user:
+    name: admin-username
+    password: admin-password
 
 # Please provide the real credentials in the environment variables
 # FLYWAY_DATASOURCE_USERNAME and FLYWAY_DATASOURCE_PASSWORD

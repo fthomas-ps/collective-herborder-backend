@@ -11,9 +11,15 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
+@EnableWebSecurity
 public class ApplicationConfiguration implements WebMvcConfigurer {
 
     @Override
@@ -43,6 +49,19 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
     @Bean(name = "orderBatchesExternalIdGenerator")
     ExternalIdGenerator orderBatchesExternalIdGenerator(OrderBatchesRepository orderBatchesRepository) {
         return new ExternalIdGenerator(orderBatchesRepository);
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+            .csrf(AbstractHttpConfigurer::disable)
+            .authorizeHttpRequests(requests -> requests
+                .requestMatchers("/herbs").permitAll()
+                .requestMatchers( "/orders/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .httpBasic(Customizer.withDefaults())
+            .build();
     }
 
 }

@@ -187,21 +187,4 @@ public class OrderController {
             .body(orderDto);
     }
 
-    //@GetMapping
-    //public ResponseEntity<List<OrderDto>> getHerbOrders() {
-    //    List<OrderDto> orderDtos = ordersRepository.findAll()
-    //        .stream()
-    //        .map(OrderDto::from)
-    //        .toList();
-    //    return ResponseEntity.ok()
-    //        .body(orderDtos);
-    //}
-
-    @GetMapping(path = "/aggregated")
-    public ResponseEntity<List<AggregatedHerbQuantityDto>> getAggregatedOrder() {
-        List<AggregatedHerbQuantityDto> herbQuantities = ordersRepository.aggregateOrders();
-        return ResponseEntity
-            .ok(herbQuantities);
-    }
-
 }

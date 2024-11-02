@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(path = "/bills")
+@RequestMapping(path = "/admin/bills")
 @Slf4j
 public class BillController {
 
@@ -42,16 +42,16 @@ public class BillController {
 //
 //    }
 
-    //@PutMapping(consumes = "application/json", path = "/{billId}")
-    //@Transactional
-    //public ResponseEntity<BillDto> updateBill(@RequestBody BillDto billDto, @PathVariable Long billId) {
-    //    Bill foundBill = billRepository.findById(billId)
-    //        .orElseThrow(() -> new EntityNotFoundException(format("Bill %s not found", billId)));
-    //    BillDto savedBillDto = addOrUpdateBill(billDto, foundBill);
-    //    return ResponseEntity
-    //        .ok()
-    //        .body(savedBillDto);
-    //}
+    @PutMapping(consumes = "application/json", path = "/{billId}")
+    @Transactional
+    public ResponseEntity<BillDto> updateBill(@RequestBody BillDto billDto, @PathVariable Long billId) {
+        Bill foundBill = billRepository.findById(billId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Bill %s not found", billId)));
+        BillDto savedBillDto = addOrUpdateBill(billDto, foundBill);
+        return ResponseEntity
+            .ok()
+            .body(savedBillDto);
+    }
 
     private BillDto addOrUpdateBill(BillDto billDto, Bill oldBill) {
         Bill bill = createBillFrom(billDto);

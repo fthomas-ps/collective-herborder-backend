@@ -20,9 +20,10 @@ spring:
     properties.mail.smtp:
       auth: tls
       starttls.enable: true
+  security.user:
+    name: admin
+    password: admin
 
-# Please provide the real credentials in the environment variables
-# FLYWAY_DATASOURCE_USERNAME and FLYWAY_DATASOURCE_PASSWORD
 flyway.datasource:
   url: jdbc:postgresql://localhost:5435/herborders
   username: postgres
