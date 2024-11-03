@@ -58,6 +58,7 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
             .authorizeHttpRequests(requests -> requests
                 .requestMatchers("/herbs").permitAll()
                 .requestMatchers( "/orders/**").permitAll()
+                .requestMatchers( "/admin/login").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults())
