@@ -45,7 +45,8 @@ public class BillController {
     @PutMapping(consumes = "application/json", path = "/{billId}")
     @Transactional
     public ResponseEntity<BillDto> updateBill(@RequestBody BillDto billDto, @PathVariable Long billId) {
-        Bill foundBill = billRepository.findById(billId)
+        // Since there is only one batch order right, there is also only one bill. So, just take it.
+        Bill foundBill = billRepository.findAll().stream().findFirst()
             .orElseThrow(() -> new EntityNotFoundException(format("Bill %s not found", billId)));
         BillDto savedBillDto = addOrUpdateBill(billDto, foundBill);
         return ResponseEntity
@@ -80,13 +81,14 @@ public class BillController {
             .toList();
     }
 
-    //@GetMapping(path = "/{id}")
-    //public ResponseEntity<BillDto> getBill(@PathVariable Long id) {
-    //    Bill bill = billRepository.findById(id)
-    //        .orElseThrow(() -> new EntityNotFoundException(format("Bill %d not found", id)));
-    //    BillDto billDto = BillDto.from(bill);
-    //    return ResponseEntity.ok()
-    //        .body(billDto);
-    //}
+    @GetMapping(path = "/{id}")
+    public ResponseEntity<BillDto> getBill(@PathVariable Long id) {
+        // Since there is only one batch order right now, there is also only one bill. So, just take it.
+        Bill bill = billRepository.findAll().stream().findFirst()
+            .orElseThrow(() -> new EntityNotFoundException(format("Bill %d not found", id)));
+        BillDto billDto = BillDto.from(bill);
+        return ResponseEntity.ok()
+            .body(billDto);
+    }
 
 }
