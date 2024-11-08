@@ -37,7 +37,7 @@ public class Shipment {
 
     LocalDate date;
 
-    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, targetEntity = ShipmentHerbItem.class)
+    @OneToMany(mappedBy = "shipment", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = ShipmentHerbItem.class)
     List<ShipmentHerbItem> herbs;
 
 }

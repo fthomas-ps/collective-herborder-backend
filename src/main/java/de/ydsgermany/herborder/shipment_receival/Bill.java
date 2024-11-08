@@ -38,7 +38,7 @@ public class Bill {
     LocalDate date;
     int vat;
 
-    @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, targetEntity = BillHerbItem.class)
+    @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = BillHerbItem.class)
     List<BillHerbItem> herbs;
 
 }
