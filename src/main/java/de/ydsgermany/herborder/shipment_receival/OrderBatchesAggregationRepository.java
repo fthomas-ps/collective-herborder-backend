@@ -9,29 +9,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface OrderBatchesAggregationRepository extends JpaRepository<OrderBatch, Long> {
 
-    @Query("SELECT new de.ydsgermany.herborder.shipment_receival.AggregatedHerbItemsDto(oa.herb_id, oa.quantity, bi.quantity, sa.quantity) "
+    @Query("SELECT new de.ydsgermany.herborder.shipment_receival.AggregatedHerbItemsDto(h.name, SUM(hq.quantity), SUM(bi.quantity), SUM(si.quantity)) "
         + "FROM "
-        + "  Order o "
-        + "  JOIN ("
-        + "    SELECT"
-        + "      oi.herb.id AS herb_id,"
-        + "      SUM(oi.quantity) AS quantity "
-        + "    FROM HerbQuantity oi "
-        + "    WHERE oi.order = o "
-        + "    GROUP BY oi.herb.id "
-        + "  ) oa"
-        + "  JOIN Bill b ON :externalOrderBatchId = b.orderBatch.externalId"
-        + "  JOIN BillHerbItem bi ON b = bi.bill AND oa.herb_id = bi.herb.id"
-        + "  JOIN Shipment s ON :externalOrderBatchId = s.orderBatch.externalId "
-        + "  JOIN ( "
-        + "    SELECT "
-        + "      si.herb.id AS herb_id, "
-        + "      SUM(si.quantity) AS quantity "
-        + "    FROM ShipmentHerbItem si "
-        + "    WHERE si.shipment = s "
-        + "    GROUP BY si.herb.id"
-        + "  ) sa ON oa.herb_id = sa.herb_id"
+        + "  Herb h "
+        + "  LEFT JOIN HerbQuantity hq ON h.id = hq.herb.id "
+        + "  FULL OUTER JOIN BillHerbItem bi ON h.id = bi.herb.id "
+        + "  FULL OUTER JOIN ShipmentHerbItem si ON h.id = si.herb.id "
+        + "WHERE "
+        + "  hq.quantity IS NOT NULL "
+        + "  OR bi.quantity IS NOT NULL "
+        + "  OR si.quantity IS NOT NULL "
+        + "GROUP BY h.id, h.name "
     )
-    List<AggregatedHerbItemsDto> aggregateOrders(String externalOrderBatchId);
+    List<AggregatedHerbItemsDto> aggregateOrders(Long orderBatchId);
 
 }

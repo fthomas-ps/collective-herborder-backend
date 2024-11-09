@@ -4,6 +4,8 @@ import de.ydsgermany.herborder.order.Order;
 import de.ydsgermany.herborder.shipment_receival.Bill;
 import de.ydsgermany.herborder.shipment_receival.Shipment;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,6 +36,7 @@ public class OrderBatch {
 
     String name;
 
+    @Enumerated(EnumType.STRING)
     OrderState orderState;
 
     @OneToMany(mappedBy = "orderBatch")

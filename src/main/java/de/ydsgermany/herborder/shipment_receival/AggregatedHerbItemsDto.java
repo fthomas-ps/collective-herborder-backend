@@ -5,7 +5,7 @@ import jakarta.annotation.Nonnull;
 public record AggregatedHerbItemsDto(
 
     @Nonnull
-    Long herbId,
+    String herbName,
 
     @Nonnull
     Long quantityOrders,

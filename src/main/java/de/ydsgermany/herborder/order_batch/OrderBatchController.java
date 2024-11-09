@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(path = "/order_batches")
+@RequestMapping(path = "/admin/order_batches")
 @Slf4j
 public class OrderBatchController {
 
@@ -47,7 +47,7 @@ public class OrderBatchController {
     @PutMapping(consumes = "application/json", path = "/{externalOrderBatchId}")
     @Transactional
     public ResponseEntity<OrderBatchDto> updateOrderBatch(@RequestBody OrderBatchDto orderBatchDto, @PathVariable String externalOrderBatchId) {
-        OrderBatch foundOrder = orderBatchesRepository.findByExternalId(externalOrderBatchId)
+        OrderBatch foundOrder = orderBatchesRepository.findAll().stream().findFirst()
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderBatchId)));
         OrderBatchDto savedOrderDto = addOrUpdateOrderBatch(orderBatchDto, foundOrder);
         return ResponseEntity
@@ -72,12 +72,13 @@ public class OrderBatchController {
         return OrderBatch.builder()
             .externalId(orderBatchDto.externalId())
             .name(orderBatchDto.name())
+            .orderState(orderBatchDto.orderState())
             .build();
     }
 
     @GetMapping(path = "/{externalOrderBatchId}")
     public ResponseEntity<OrderBatchDto> getOrderBatch(@PathVariable String externalOrderBatchId) {
-        OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
+        OrderBatch orderBatch = orderBatchesRepository.findAll().stream().findFirst()
             .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
         OrderBatchDto orderBatchDto = OrderBatchDto.from(orderBatch);
         return ResponseEntity.ok()

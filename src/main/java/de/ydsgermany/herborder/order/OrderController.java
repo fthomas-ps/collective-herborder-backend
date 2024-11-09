@@ -43,7 +43,7 @@ public class OrderController {
         
         %s
         
-        Deine Bestellung kannst jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
+        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
         
         Viele Grüße
         Shivam und Amrut
@@ -57,7 +57,7 @@ public class OrderController {
         
         %s
         
-        Deine Bestellung kannst jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
+        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
  
         Viele Grüße
         Shivam und Amrut

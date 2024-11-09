@@ -1,5 +1,9 @@
 package de.ydsgermany.herborder.shipment_receival;
 
+import static java.lang.String.format;
+
+import de.ydsgermany.herborder.order_batch.OrderBatch;
+import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,13 +27,15 @@ public class OrderBatchesController {
         this.orderBatchesAggregationRepository = orderBatchesAggregationRepository;
     }
 
-    //@GetMapping(path = "/{externalOrderBatchId}/shipment_receival_stats")
-    //public ResponseEntity<List<AggregatedHerbItemsDto>> getShipmentReceivalOverview(
-    //    @PathVariable String externalOrderBatchId) {
-    //    List<AggregatedHerbItemsDto> aggregatedHerbItemsDtos = orderBatchesAggregationRepository.aggregateOrders(
-    //        externalOrderBatchId);
-    //    return ResponseEntity.ok()
-    //        .body(aggregatedHerbItemsDtos);
-    //}
+    @GetMapping(path = "/{externalOrderBatchId}/stats")
+    public ResponseEntity<List<AggregatedHerbItemsDto>> getShipmentReceivalOverview(
+        @PathVariable String externalOrderBatchId) {
+        OrderBatch orderBatch = orderBatchesAggregationRepository.findAll().stream().findFirst()
+            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
+        List<AggregatedHerbItemsDto> aggregatedHerbItemsDtos = orderBatchesAggregationRepository.aggregateOrders(
+            orderBatch.getId());
+        return ResponseEntity.ok()
+            .body(aggregatedHerbItemsDtos);
+    }
 
 }
