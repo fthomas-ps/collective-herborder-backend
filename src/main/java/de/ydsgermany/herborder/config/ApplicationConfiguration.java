@@ -2,7 +2,7 @@ package de.ydsgermany.herborder.config;
 
 import de.ydsgermany.herborder.global.ExternalIdGenerator;
 import de.ydsgermany.herborder.order.OrdersRepository;
-import de.ydsgermany.herborder.order_batch.OrderBatchesRepository;
+import de.ydsgermany.herborder.order_batch.AdminOrderBatchesRepository;
 import java.util.List;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
@@ -47,7 +47,7 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
     }
 
     @Bean(name = "orderBatchesExternalIdGenerator")
-    ExternalIdGenerator orderBatchesExternalIdGenerator(OrderBatchesRepository orderBatchesRepository) {
+    ExternalIdGenerator orderBatchesExternalIdGenerator(AdminOrderBatchesRepository orderBatchesRepository) {
         return new ExternalIdGenerator(orderBatchesRepository);
     }
 
@@ -56,6 +56,7 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(requests -> requests
+                .requestMatchers( "/order_batches/**").permitAll()
                 .requestMatchers("/herbs").permitAll()
                 .requestMatchers( "/orders/**").permitAll()
                 .requestMatchers( "/admin/login").permitAll()
