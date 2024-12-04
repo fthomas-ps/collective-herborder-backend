@@ -64,6 +64,7 @@ public class OrderController {
         
         """;
     public static final String HERBS_FORMAT = "%s: %d";
+
     private final OrdersRepository ordersRepository;
     private final HerbsRepository herbsRepository;
     private final ExternalIdGenerator externalIdGenerator;
@@ -100,6 +101,10 @@ public class OrderController {
     @PutMapping(consumes = "application/json", path = "/{externalOrderId}")
     @Transactional
     public ResponseEntity<OrderDto> updateOrder(@RequestBody OrderDto orderDto, @PathVariable String externalOrderId) {
+        Set<ConstraintViolation<OrderDto>> violations = validator.validate(orderDto);
+        if (!violations.isEmpty()) {
+            throw new ValidationException(violations.toString());
+        }
         Order foundOrder = ordersRepository.findByExternalId(externalOrderId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
         Order savedOrder = addOrUpdateOrder(orderDto, foundOrder);

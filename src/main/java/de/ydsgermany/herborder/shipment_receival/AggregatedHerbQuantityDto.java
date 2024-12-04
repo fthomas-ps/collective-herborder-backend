@@ -1,4 +1,4 @@
-package de.ydsgermany.herborder.order;
+package de.ydsgermany.herborder.shipment_receival;
 
 import jakarta.annotation.Nonnull;
 
