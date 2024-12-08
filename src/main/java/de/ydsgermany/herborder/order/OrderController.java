@@ -14,7 +14,10 @@ import jakarta.validation.ValidationException;
 import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -144,12 +147,17 @@ public class OrderController {
     }
 
     private List<HerbQuantity> herbsFrom(Order order, List<HerbQuantityDto> herbDtos) {
+        Map<Long, HerbQuantity> herbQuantities = order.getHerbs().stream()
+            .collect(Collectors.toMap(herbQuantity -> herbQuantity.getHerb().getId(), Function.identity()));
         return herbDtos.stream()
             .map(herbQuantityDto -> {
                 Herb herb = herbsRepository.findById(herbQuantityDto.herbId())
                     .orElseThrow(() -> new EntityNotFoundException(
                         format("Herb with id %s not found", herbQuantityDto.herbId())));
-                return new HerbQuantity(order, herb, herbQuantityDto.quantity());
+                return new HerbQuantity(order,
+                    herb,
+                    herbQuantityDto.quantity(),
+                    herbQuantities.get(herbQuantityDto.herbId()).getPackedQuantity());
             })
             .toList();
     }

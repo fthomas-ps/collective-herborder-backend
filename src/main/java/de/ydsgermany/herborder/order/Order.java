@@ -43,4 +43,6 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = HerbQuantity.class)
     List<HerbQuantity> herbs;
 
+    Long paidAmount;
+
 }

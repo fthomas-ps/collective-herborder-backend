@@ -1,7 +1,6 @@
 package de.ydsgermany.herborder.shipment_receival;
 
 import de.ydsgermany.herborder.order.HerbQuantity;
-import de.ydsgermany.herborder.order.HerbQuantityDto;
 import de.ydsgermany.herborder.order.Order;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -22,9 +21,11 @@ public record AdminOrderDto(
     String mail,
 
     @NotNull
-    List<HerbQuantityDto> herbs,
+    List<AdminHerbQuantityDto> herbs,
 
-    Long price
+    Long price,
+
+    Long paidAmount
 
 ) {
 
@@ -36,14 +37,14 @@ public record AdminOrderDto(
             .mail(order.getMail())
             .herbs(herbsFrom(order.getHerbs()))
             .price(price)
+            .paidAmount(order.getPaidAmount())
             .build();
     }
 
-    private static List<HerbQuantityDto> herbsFrom(List<HerbQuantity> herbs) {
+    private static List<AdminHerbQuantityDto> herbsFrom(List<HerbQuantity> herbs) {
         return herbs.stream()
-            .map(HerbQuantityDto::from)
+            .map(AdminHerbQuantityDto::from)
             .toList();
     }
-
 
 }

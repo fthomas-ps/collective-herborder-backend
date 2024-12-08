@@ -8,7 +8,6 @@ import de.ydsgermany.herborder.global.ExternalIdGenerator;
 import de.ydsgermany.herborder.herbs.Herb;
 import de.ydsgermany.herborder.herbs.HerbsRepository;
 import de.ydsgermany.herborder.order.HerbQuantity;
-import de.ydsgermany.herborder.order.HerbQuantityDto;
 import de.ydsgermany.herborder.order.Order;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -132,7 +131,6 @@ public class AdminOrderController {
         Order foundOrder = ordersRepository.findByExternalId(externalOrderId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
         Order savedOrder = addOrUpdateOrder(orderDto, foundOrder);
-        sendConfirmationMail(savedOrder, true);
         AdminOrderDto savedOrderDto = AdminOrderDto.from(savedOrder, null);
         return ResponseEntity
             .ok(savedOrderDto);
@@ -153,6 +151,7 @@ public class AdminOrderController {
             // If we call order.setHerbs(<updated herbs list>), the update will fail
             order.getHerbs().clear();
             order.getHerbs().addAll(herbsFrom(order, orderDto.herbs()));
+            order.setPaidAmount(orderDto.paidAmount());
         }
         return ordersRepository.save(order);
     }
@@ -167,15 +166,26 @@ public class AdminOrderController {
         return order;
     }
 
-    private List<HerbQuantity> herbsFrom(Order order, List<HerbQuantityDto> herbDtos) {
+    private List<HerbQuantity> herbsFrom(Order order, List<AdminHerbQuantityDto> herbDtos) {
         return herbDtos.stream()
             .map(herbQuantityDto -> {
                 Herb herb = herbsRepository.findById(herbQuantityDto.herbId())
                     .orElseThrow(() -> new EntityNotFoundException(
                         format("Herb with id %s not found", herbQuantityDto.herbId())));
-                return new HerbQuantity(order, herb, herbQuantityDto.quantity());
+                return new HerbQuantity(order, herb, herbQuantityDto.quantity(), herbQuantityDto.packedQuantity());
             })
             .toList();
+    }
+
+    @PostMapping(consumes = "application/json", path = "/{externalOrderId}")
+    @Transactional
+    public ResponseEntity<Void> sendConfirmationMail(@PathVariable String externalOrderId) {
+        Order foundOrder = ordersRepository.findByExternalId(externalOrderId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
+        sendConfirmationMail(foundOrder, true);
+        return ResponseEntity
+            .ok()
+            .build();
     }
 
     private void sendConfirmationMail(Order order, boolean isUpdate) {
@@ -236,9 +246,18 @@ public class AdminOrderController {
 
     @GetMapping(path = "/{externalOrderId}")
     public ResponseEntity<AdminOrderDto> getHerbOrder(@PathVariable String externalOrderId) {
+        Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
+        Map<Long, BillHerbItem> billHerbItems = billOpt
+            .map(bill ->
+                bill.getHerbs().stream()
+                    .collect(toMap(herbItem -> herbItem.getHerb().getId(), herbItem -> herbItem))
+            )
+            .orElseGet(HashMap::new);
+
         Order order = ordersRepository.findByExternalId(externalOrderId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
-        AdminOrderDto orderDto = AdminOrderDto.from(order, null);
+        Long totalPriceWithVat = calculatePrice(order, billHerbItems, billOpt);
+        AdminOrderDto orderDto = AdminOrderDto.from(order, totalPriceWithVat);
         return ResponseEntity.ok()
             .body(orderDto);
     }

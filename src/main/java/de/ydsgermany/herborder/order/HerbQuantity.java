@@ -32,5 +32,7 @@ public class HerbQuantity {
 
     Integer quantity;
 
+    Integer packedQuantity;
+
 }
 
