@@ -10,9 +10,4 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface AdminOrdersRepository extends JpaRepository<Order, Long>, ExternalIdRepository<Order> {
 
-    @Query("SELECT new de.ydsgermany.herborder.shipment_receival.AggregatedHerbQuantityDto(q.herb.id, SUM(q.quantity)) "
-        + "FROM HerbQuantity q "
-        + "GROUP BY q.herb.id")
-    List<AggregatedHerbQuantityDto> aggregateOrders();
-
 }

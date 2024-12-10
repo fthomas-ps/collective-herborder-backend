@@ -335,11 +335,4 @@ public class AdminOrderController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping(path = "/aggregated")
-    public ResponseEntity<List<AggregatedHerbQuantityDto>> getAggregatedOrder() {
-        List<AggregatedHerbQuantityDto> herbQuantities = ordersRepository.aggregateOrders();
-        return ResponseEntity
-            .ok(herbQuantities);
-    }
-
 }
