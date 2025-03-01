@@ -38,4 +38,15 @@ public class OrderBatchesController {
             .body(aggregatedHerbItemsDtos);
     }
 
+    @GetMapping(path = "/{externalOrderBatchId}/missing-herbs")
+    public ResponseEntity<List<MissingHerbsDto>> getMissingHerbs(
+        @PathVariable String externalOrderBatchId) {
+        OrderBatch orderBatch = orderBatchesAggregationRepository.findAll().stream().findFirst()
+            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
+        List<MissingHerbsDto> missingHerbsDto = orderBatchesAggregationRepository.findMissingHerbs(
+            orderBatch.getId());
+        return ResponseEntity.ok()
+            .body(missingHerbsDto);
+    }
+
 }
