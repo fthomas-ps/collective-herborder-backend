@@ -30,7 +30,7 @@ public class OrderBatchesController {
     @GetMapping(path = "/{externalOrderBatchId}/stats")
     public ResponseEntity<List<AggregatedHerbItemsDto>> getShipmentReceivalOverview(
         @PathVariable String externalOrderBatchId) {
-        OrderBatch orderBatch = orderBatchesAggregationRepository.findAll().stream().findFirst()
+        OrderBatch orderBatch = orderBatchesAggregationRepository.findByExternalId(externalOrderBatchId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
         List<AggregatedHerbItemsDto> aggregatedHerbItemsDtos = orderBatchesAggregationRepository.aggregateOrders(
             orderBatch.getId());

@@ -1,5 +1,6 @@
 package de.ydsgermany.herborder.shipment_receival;
 
+import de.ydsgermany.herborder.global.ExternalIdRepository;
 import de.ydsgermany.herborder.order_batch.OrderBatch;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -7,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface OrderBatchesAggregationRepository extends JpaRepository<OrderBatch, Long> {
+public interface OrderBatchesAggregationRepository extends JpaRepository<OrderBatch, Long>, ExternalIdRepository<OrderBatch> {
 
     @Query("SELECT new de.ydsgermany.herborder.shipment_receival.AggregatedHerbItemsDto(h.name, SUM(hqa.herb_quantity), SUM(bi.quantity), SUM(si.shipped_quantity)) "
         + "FROM "
