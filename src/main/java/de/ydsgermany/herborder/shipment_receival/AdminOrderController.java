@@ -86,13 +86,7 @@ public class AdminOrderController {
         BEVODEBBXXX
 
         Verwendungszweck:
-        Auslage Kräuter
-
-        Paypal geht nicht. Das braucht zu lange, bis es bei mir auf dem Konto ist. Also bitte direkt auf mein Konto überweisen.
-
-        Sobald die Gelder von allen eingegangen sind, beginnen wir mit der Ausgabe.
-
-        Und wie auch schon geschrieben, wir freuen uns über Tüten.
+        Fremdgeld Ayushakti
 
         Ganz liebe Grüße
         Shivam und Amrut
