@@ -3,6 +3,7 @@ package de.ydsgermany.herborder.order_batch;
 import static java.lang.String.format;
 
 import de.ydsgermany.herborder.global.ExternalIdGenerator;
+import de.ydsgermany.herborder.shipment_receival.Bill;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.net.URI;
@@ -40,7 +41,7 @@ public class AdminOrderBatchController {
     public ResponseEntity<OrderBatchDto> createOrderBatch(@RequestBody OrderBatchDto orderBatchDto) {
         OrderBatchDto savedOrderBatchDto = addOrUpdateOrderBatch(orderBatchDto, null);
         return ResponseEntity
-            .created(URI.create("https://localhost:8080/orders/" + savedOrderBatchDto.externalId()))
+            .created(URI.create("https://localhost:8080/admin/order_batches/" + savedOrderBatchDto.externalId()))
             .body(savedOrderBatchDto);
     }
 
@@ -61,6 +62,9 @@ public class AdminOrderBatchController {
             newOrderBatch.setId(null);
             newOrderBatch.setExternalId(externalIdGenerator.generate());
             newOrderBatch.setOrderState(OrderState.CREATED);
+            Bill bill = new Bill();
+            bill.setOrderBatch(newOrderBatch);
+            newOrderBatch.setBill(bill);
         } else {
             newOrderBatch.setId(oldOrderBatch.getId());
             newOrderBatch.setExternalId(oldOrderBatch.getExternalId());
