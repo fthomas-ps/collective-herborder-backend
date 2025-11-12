@@ -1,11 +1,13 @@
 package de.ydsgermany.herborder.order;
 
 import static java.lang.String.format;
+import static java.util.Objects.requireNonNullElse;
 import static java.util.stream.Collectors.joining;
 
 import de.ydsgermany.herborder.global.ExternalIdGenerator;
 import de.ydsgermany.herborder.herbs.Herb;
 import de.ydsgermany.herborder.herbs.HerbsRepository;
+import de.ydsgermany.herborder.order_batch.OrderBatch;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
@@ -15,6 +17,7 @@ import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -33,7 +36,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(path = "/orders")
+@RequestMapping(path = "/order_batches/{externalOrderBatchId}/orders")
 @Slf4j
 public class OrderController {
 
@@ -46,7 +49,7 @@ public class OrderController {
         
         %s
         
-        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
+        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/%s/order/%s.
         
         Viele Grüße
         Shivam und Amrut
@@ -60,7 +63,7 @@ public class OrderController {
         
         %s
         
-        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
+        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/%s/order/%s.
  
         Viele Grüße
         Shivam und Amrut
@@ -68,6 +71,7 @@ public class OrderController {
         """;
     public static final String HERBS_FORMAT = "%s: %d";
 
+    private final OrderBatchesRepository orderBatchesRepository;
     private final OrdersRepository ordersRepository;
     private final HerbsRepository herbsRepository;
     private final ExternalIdGenerator externalIdGenerator;
@@ -76,9 +80,11 @@ public class OrderController {
 
     @Autowired
     public OrderController(
+        OrderBatchesRepository orderBatchesRepository,
         OrdersRepository ordersRepository, HerbsRepository herbsRepository,
         @Qualifier("ordersExternalIdGenerator") ExternalIdGenerator externalIdGenerator,
         JavaMailSender javaMailSender) {
+        this.orderBatchesRepository = orderBatchesRepository;
         this.ordersRepository = ordersRepository;
         this.herbsRepository = herbsRepository;
         this.externalIdGenerator = externalIdGenerator;
@@ -88,13 +94,15 @@ public class OrderController {
 
     @PostMapping(consumes = "application/json")
     @Transactional
-    public ResponseEntity<OrderDto> createOrder(@RequestBody OrderDto orderDto) {
+    public ResponseEntity<OrderDto> createOrder(@PathVariable String externalOrderBatchId, @RequestBody OrderDto orderDto) {
         Set<ConstraintViolation<OrderDto>> violations = validator.validate(orderDto);
         if (!violations.isEmpty()) {
             throw new ValidationException(violations.toString());
         }
-        Order savedOrder = addOrUpdateOrder(orderDto, null);
-        sendConfirmationMail(savedOrder, false);
+        OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
+        Order savedOrder = addOrUpdateOrder(orderBatch, orderDto, null);
+        sendConfirmationMail(externalOrderBatchId, savedOrder, false);
         OrderDto savedOrderDto = OrderDto.from(savedOrder);
         return ResponseEntity
             .created(URI.create("https://meine-kraeuterbestellung.online/api/orders/" + savedOrderDto.externalId()))
@@ -103,25 +111,28 @@ public class OrderController {
 
     @PutMapping(consumes = "application/json", path = "/{externalOrderId}")
     @Transactional
-    public ResponseEntity<OrderDto> updateOrder(@RequestBody OrderDto orderDto, @PathVariable String externalOrderId) {
+    public ResponseEntity<OrderDto> updateOrder(@PathVariable String externalOrderBatchId, @RequestBody OrderDto orderDto, @PathVariable String externalOrderId) {
         Set<ConstraintViolation<OrderDto>> violations = validator.validate(orderDto);
         if (!violations.isEmpty()) {
             throw new ValidationException(violations.toString());
         }
+        OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
         Order foundOrder = ordersRepository.findByExternalId(externalOrderId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
-        Order savedOrder = addOrUpdateOrder(orderDto, foundOrder);
-        sendConfirmationMail(savedOrder, true);
+        Order savedOrder = addOrUpdateOrder(orderBatch, orderDto, foundOrder);
+        sendConfirmationMail(externalOrderBatchId, savedOrder, true);
         OrderDto savedOrderDto = OrderDto.from(savedOrder);
         return ResponseEntity
             .ok(savedOrderDto);
     }
 
-    private Order addOrUpdateOrder(OrderDto orderDto, Order oldOrder) {
+    private Order addOrUpdateOrder(OrderBatch orderBatch, OrderDto orderDto, Order oldOrder) {
         Order order;
         if (oldOrder == null) {
             order = createOrderFrom(orderDto);
             order.setId(null);
+            order.setOrderBatch(orderBatch);
             order.setExternalId(externalIdGenerator.generate());
         } else {
             order = oldOrder;
@@ -147,7 +158,7 @@ public class OrderController {
     }
 
     private List<HerbQuantity> herbsFrom(Order order, List<HerbQuantityDto> herbDtos) {
-        Map<Long, HerbQuantity> herbQuantities = order.getHerbs().stream()
+        Map<Long, HerbQuantity> herbQuantities = requireNonNullElse(order.getHerbs(), List.<HerbQuantity>of()).stream()
             .collect(Collectors.toMap(herbQuantity -> herbQuantity.getHerb().getId(), Function.identity()));
         return herbDtos.stream()
             .map(herbQuantityDto -> {
@@ -157,13 +168,16 @@ public class OrderController {
                 return new HerbQuantity(order,
                     herb,
                     herbQuantityDto.quantity(),
-                    herbQuantities.get(herbQuantityDto.herbId()).getPackedQuantity());
+                    herbQuantities.containsKey(herbQuantityDto.herbId()) ?
+                        herbQuantities.get(herbQuantityDto.herbId()).getPackedQuantity() :
+                        null
+                );
             })
             .toList();
     }
 
-    private void sendConfirmationMail(Order order, boolean isUpdate) {
-        String mailBody = generateMailBody(order, isUpdate);
+    private void sendConfirmationMail(String externalOrderBatchId, Order order, boolean isUpdate) {
+        String mailBody = generateMailBody(externalOrderBatchId, order, isUpdate);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(order.getMail());
         message.setBcc(BCC_ADDRESS);
@@ -172,10 +186,10 @@ public class OrderController {
         mailSender.send(message);
     }
 
-    private static String generateMailBody(Order order, boolean isUpdate) {
+    private static String generateMailBody(String externalOrderBatchId, Order order, boolean isUpdate) {
         String mailBodyTemplate = getOperationSpecificTemplate(isUpdate);
         String herbsList = generateHerbsList(order);
-        return mailBodyTemplate.formatted(order.getFirstName(), herbsList, order.getExternalId());
+        return mailBodyTemplate.formatted(order.getFirstName(), herbsList, externalOrderBatchId, order.getExternalId());
     }
 
     private static String getOperationSpecificTemplate(boolean isUpdate) {

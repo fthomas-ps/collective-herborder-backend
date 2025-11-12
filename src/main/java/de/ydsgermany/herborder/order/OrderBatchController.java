@@ -28,7 +28,7 @@ public class OrderBatchController {
 
     @GetMapping(path = "/{externalOrderBatchId}")
     public ResponseEntity<OrderBatchDto> getOrderBatch(@PathVariable String externalOrderBatchId) {
-        OrderBatch orderBatch = orderBatchesRepository.findAll().stream().findFirst()
+        OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
         OrderBatchDto orderBatchDto = OrderBatchDto.from(orderBatch);
         return ResponseEntity.ok()

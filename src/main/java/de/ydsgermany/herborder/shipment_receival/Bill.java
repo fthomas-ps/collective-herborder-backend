@@ -26,6 +26,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "bills")
 public class Bill {
 
+    private static final int DEFAULT_VAT = 7;
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "bills_generator")
     @SequenceGenerator(name = "bills_generator", sequenceName = "bills_seq", allocationSize = 1)
@@ -36,7 +38,7 @@ public class Bill {
     OrderBatch orderBatch;
 
     LocalDate date;
-    int vat;
+    int vat = DEFAULT_VAT;
 
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = BillHerbItem.class)
     List<BillHerbItem> herbs;

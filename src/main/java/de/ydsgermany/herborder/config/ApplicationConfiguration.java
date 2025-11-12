@@ -56,13 +56,14 @@ public class ApplicationConfiguration implements WebMvcConfigurer {
         return http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(requests -> requests
-                .requestMatchers( "/order_batches/**").permitAll()
+                .requestMatchers("/order_batches/**").permitAll()
                 .requestMatchers("/herbs").permitAll()
-                .requestMatchers( "/orders/**").permitAll()
-                .requestMatchers( "/admin/login").permitAll()
+                .requestMatchers("/orders/**").permitAll()
+                .requestMatchers("/admin/login").permitAll()
                 .anyRequest().authenticated()
             )
             .httpBasic(Customizer.withDefaults())
+            .csrf(AbstractHttpConfigurer::disable)
             .build();
     }
 

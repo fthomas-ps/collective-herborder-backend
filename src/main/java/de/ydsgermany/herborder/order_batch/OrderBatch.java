@@ -3,6 +3,7 @@ package de.ydsgermany.herborder.order_batch;
 import de.ydsgermany.herborder.order.Order;
 import de.ydsgermany.herborder.shipment_receival.Bill;
 import de.ydsgermany.herborder.shipment_receival.Shipment;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,9 +18,11 @@ import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
+@EqualsAndHashCode(exclude = {"orders", "bill", "shipments"})
 @Entity
 @Builder
 @NoArgsConstructor
@@ -42,7 +45,7 @@ public class OrderBatch {
     @OneToMany(mappedBy = "orderBatch")
     Set<Order> orders;
 
-    @OneToOne(mappedBy = "orderBatch")
+    @OneToOne(mappedBy = "orderBatch", cascade = CascadeType.PERSIST)
     Bill bill;
 
     @OneToMany(mappedBy = "orderBatch")
