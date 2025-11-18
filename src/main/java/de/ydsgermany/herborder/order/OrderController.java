@@ -17,7 +17,6 @@ import jakarta.validation.Validator;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 public class OrderController {
 
-    public static final String MAIL_TITLE = "Kräuterbestellung 2025";
     public static final String BCC_ADDRESS = "florianthomas138@gmail.com";
     public static final String MAIL_BODY_TEMPLATE_CREATE_ORDER = """
         Jai Swaminarayan Das na Das %s,
@@ -102,7 +100,7 @@ public class OrderController {
         OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
         Order savedOrder = addOrUpdateOrder(orderBatch, orderDto, null);
-        sendConfirmationMail(externalOrderBatchId, savedOrder, false);
+        sendConfirmationMail(savedOrder, false);
         OrderDto savedOrderDto = OrderDto.from(savedOrder);
         return ResponseEntity
             .created(URI.create("https://meine-kraeuterbestellung.online/api/orders/" + savedOrderDto.externalId()))
@@ -121,7 +119,7 @@ public class OrderController {
         Order foundOrder = ordersRepository.findByExternalId(externalOrderId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
         Order savedOrder = addOrUpdateOrder(orderBatch, orderDto, foundOrder);
-        sendConfirmationMail(externalOrderBatchId, savedOrder, true);
+        sendConfirmationMail(savedOrder, true);
         OrderDto savedOrderDto = OrderDto.from(savedOrder);
         return ResponseEntity
             .ok(savedOrderDto);
@@ -176,20 +174,20 @@ public class OrderController {
             .toList();
     }
 
-    private void sendConfirmationMail(String externalOrderBatchId, Order order, boolean isUpdate) {
-        String mailBody = generateMailBody(externalOrderBatchId, order, isUpdate);
+    private void sendConfirmationMail(Order order, boolean isUpdate) {
+        String mailBody = generateMailBody(order, isUpdate);
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(order.getMail());
         message.setBcc(BCC_ADDRESS);
-        message.setSubject(MAIL_TITLE);
+        message.setSubject(order.getOrderBatch().getName());
         message.setText(mailBody);
         mailSender.send(message);
     }
 
-    private static String generateMailBody(String externalOrderBatchId, Order order, boolean isUpdate) {
+    private static String generateMailBody(Order order, boolean isUpdate) {
         String mailBodyTemplate = getOperationSpecificTemplate(isUpdate);
         String herbsList = generateHerbsList(order);
-        return mailBodyTemplate.formatted(order.getFirstName(), herbsList, externalOrderBatchId, order.getExternalId());
+        return mailBodyTemplate.formatted(order.getFirstName(), herbsList, order.getOrderBatch().getExternalId(), order.getExternalId());
     }
 
     private static String getOperationSpecificTemplate(boolean isUpdate) {

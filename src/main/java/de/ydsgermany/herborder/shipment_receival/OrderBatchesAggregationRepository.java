@@ -12,16 +12,27 @@ public interface OrderBatchesAggregationRepository extends JpaRepository<OrderBa
 
     @Query("SELECT new de.ydsgermany.herborder.shipment_receival.AggregatedHerbItemsDto(h.name, SUM(hqa.herb_quantity), SUM(bi.quantity), SUM(si.shipped_quantity)) "
         + "FROM "
-        + "  Herb h "
-        + "  LEFT JOIN (SELECT hq.herb.id AS herb_id,SUM(hq.quantity) AS herb_quantity FROM HerbQuantity hq GROUP BY hq.herb.id )"
-        + " hqa ON h.id = hqa.herb_id "
-        + "  FULL OUTER JOIN BillHerbItem bi ON h.id = bi.herb.id "
-        + "  FULL OUTER JOIN (SELECT shi.herb.id AS herb_id,SUM(shi.quantity) AS shipped_quantity FROM ShipmentHerbItem shi GROUP BY shi.herb.id ) "
+        + "  OrderBatch ob"
+        + "  CROSS JOIN Herb h "
+        + "  LEFT JOIN ("
+        + "     SELECT hq.herb.id AS herb_id,SUM(hq.quantity) AS herb_quantity"
+        + "     FROM HerbQuantity hq"
+        + "         JOIN Order o ON o.id = hq.order.id AND o.orderBatch.id = :orderBatchId"
+        + "     GROUP BY hq.herb.id ) hqa"
+        + "         ON h.id = hqa.herb_id "
+        + "  LEFT JOIN Bill bill ON ob.id = bill.orderBatch.id "
+        + "  FULL OUTER JOIN BillHerbItem bi ON bill.id = bi.bill.id AND h.id = bi.herb.id "
+        + "  FULL OUTER JOIN ("
+        + "     SELECT shi.herb.id AS herb_id,SUM(shi.quantity) AS shipped_quantity"
+        + "     FROM ShipmentHerbItem shi"
+        + "         JOIN Shipment s ON shi.shipment.id = s.id AND s.orderBatch.id = :orderBatchId"
+        + "     GROUP BY shi.herb.id ) "
         + " si ON h.id = si.herb_id "
         + "WHERE "
-        + "  hqa.herb_quantity IS NOT NULL "
+        + "  ob.id = :orderBatchId "
+        + "  AND (hqa.herb_quantity IS NOT NULL "
         + "  OR bi.quantity IS NOT NULL "
-        + "  OR si.shipped_quantity IS NOT NULL "
+        + "  OR si.shipped_quantity IS NOT NULL) "
         + "GROUP BY h.id, h.name "
     )
     List<AggregatedHerbItemsDto> aggregateOrders(Long orderBatchId);
@@ -33,10 +44,13 @@ public interface OrderBatchesAggregationRepository extends JpaRepository<OrderBa
         + "    ON h.id = hq.herb.id "
         + "  LEFT JOIN Order o"
         + "    ON o.id = hq.order.id "
+        + "  LEFT JOIN OrderBatch orderBatch "
+        + "    ON orderBatch.id = o.orderBatch.id "
         + "WHERE "
-        + "  hq.packedQuantity < hq.quantity "
-        + "  OR hq.packedQuantity IS NULL "
+        + "  (hq.packedQuantity < hq.quantity "
+        + "  OR hq.packedQuantity IS NULL) "
+        + "  AND orderBatch.externalId = :externalOrderBatchId "
     )
-    List<MissingHerbsDto> findMissingHerbs(Long orderBatchId);
+    List<MissingHerbsDto> findMissingHerbs(String externalOrderBatchId);
 
 }
