@@ -4,6 +4,7 @@ import static java.lang.String.format;
 
 import de.ydsgermany.herborder.herbs.Herb;
 import de.ydsgermany.herborder.herbs.HerbsRepository;
+import de.ydsgermany.herborder.order_batch.AdminOrderBatchesRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import java.util.List;
@@ -18,36 +19,28 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(path = "/admin/bills")
+@RequestMapping(path = "/admin/order_batches/{externalOrderBatchId}/bill")
 @Slf4j
 public class BillController {
 
+    private final AdminOrderBatchesRepository orderBatchesRepository;
     private final BillRepository billRepository;
     private final HerbsRepository herbsRepository;
 
     @Autowired
     public BillController(
+        AdminOrderBatchesRepository orderBatchesRepository,
         BillRepository billRepository, HerbsRepository herbsRepository) {
+        this.orderBatchesRepository = orderBatchesRepository;
         this.billRepository = billRepository;
         this.herbsRepository = herbsRepository;
     }
 
-//    @PostMapping(consumes = "application/json")
-//    @Transactional
-//    public ResponseEntity<OrderDto> createOrder(@RequestBody OrderDto orderDto) {
-//        OrderDto savedOrderDto = addOrUpdateOrder(orderDto, null);
-//        return ResponseEntity
-//            .created(URI.create("https://localhost:8080/orders/" + savedOrderDto.externalId()))
-//            .body(savedOrderDto);
-//
-//    }
-
-    @PutMapping(consumes = "application/json", path = "/{billId}")
+    @PutMapping(consumes = "application/json")
     @Transactional
-    public ResponseEntity<BillDto> updateBill(@RequestBody BillDto billDto, @PathVariable Long billId) {
-        // Since there is only one batch order right, there is also only one bill. So, just take it.
-        Bill foundBill = billRepository.findAll().stream().findFirst()
-            .orElseThrow(() -> new EntityNotFoundException(format("Bill %s not found", billId)));
+    public ResponseEntity<BillDto> updateBill(@PathVariable String externalOrderBatchId, @RequestBody BillDto billDto) {
+        Bill foundBill = billRepository.findByOrderBatchExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Bill for Order Batch %s not found", externalOrderBatchId)));
         BillDto savedBillDto = addOrUpdateBill(billDto, foundBill);
         return ResponseEntity
             .ok()
@@ -57,6 +50,7 @@ public class BillController {
     private BillDto addOrUpdateBill(BillDto billDto, Bill oldBill) {
         Bill bill = createBillFrom(billDto);
         bill.setId(oldBill.getId());
+        bill.setOrderBatch(oldBill.getOrderBatch());
         Bill savedBill = billRepository.save(bill);
         return BillDto.from(savedBill);
     }
@@ -81,11 +75,11 @@ public class BillController {
             .toList();
     }
 
-    @GetMapping(path = "/{id}")
-    public ResponseEntity<BillDto> getBill(@PathVariable Long id) {
+    @GetMapping
+    public ResponseEntity<BillDto> getBill(@PathVariable String externalOrderBatchId) {
         // Since there is only one batch order right now, there is also only one bill. So, just take it.
-        Bill bill = billRepository.findAll().stream().findFirst()
-            .orElseThrow(() -> new EntityNotFoundException(format("Bill %d not found", id)));
+        Bill bill = billRepository.findByOrderBatchExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Bill for Order Batch %s not found", externalOrderBatchId)));
         BillDto billDto = BillDto.from(bill);
         return ResponseEntity.ok()
             .body(billDto);

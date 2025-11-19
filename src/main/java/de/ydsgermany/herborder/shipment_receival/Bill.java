@@ -16,9 +16,11 @@ import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
+@EqualsAndHashCode(exclude = {"orderBatch", "herbs"})
 @Entity
 @Builder
 @NoArgsConstructor
@@ -37,7 +39,7 @@ public class Bill {
     @JoinColumn(name = "order_batch_id")
     OrderBatch orderBatch;
 
-    LocalDate date;
+    LocalDate date = LocalDate.now();
     int vat = DEFAULT_VAT;
 
     @OneToMany(mappedBy = "bill", cascade = CascadeType.ALL, orphanRemoval = true, targetEntity = BillHerbItem.class)

@@ -14,7 +14,7 @@ public record BillDto(
     LocalDate date,
 
     @Nonnull
-    int vat,
+    Integer vat,
 
     List<BillHerbItemDto> herbs
 

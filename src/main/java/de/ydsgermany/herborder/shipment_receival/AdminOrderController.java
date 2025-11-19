@@ -9,6 +9,8 @@ import de.ydsgermany.herborder.herbs.Herb;
 import de.ydsgermany.herborder.herbs.HerbsRepository;
 import de.ydsgermany.herborder.order.HerbQuantity;
 import de.ydsgermany.herborder.order.Order;
+import de.ydsgermany.herborder.order_batch.AdminOrderBatchesRepository;
+import de.ydsgermany.herborder.order_batch.OrderBatch;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.ConstraintViolation;
@@ -35,11 +37,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(path = "/admin/orders")
+@RequestMapping(path = "/admin/order_batches/{externalOrderBatchId}/orders")
 @Slf4j
 public class AdminOrderController {
 
-    public static final String MAIL_TITLE = "Kräuterbestellung 2025";
     public static final String BCC_ADDRESS = "florianthomas138@gmail.com";
     public static final String MAIL_BODY_TEMPLATE_CREATE_ORDER = """
         Jai Swaminarayan Das na Das %s,
@@ -48,7 +49,7 @@ public class AdminOrderController {
         
         %s
         
-        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
+        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/%s/order/%s.
         
         Viele Grüße
         Shivam und Amrut
@@ -62,7 +63,7 @@ public class AdminOrderController {
         
         %s
         
-        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/order/%s.
+        Deine Bestellung kannst du jederzeit ändern. Gehe dazu einfach auf https://meine-kraeuterbestellung.online/%s/order/%s.
  
         Viele Grüße
         Shivam und Amrut
@@ -92,6 +93,7 @@ public class AdminOrderController {
         Shivam und Amrut
         """;
 
+    private final AdminOrderBatchesRepository orderBatchesRepository;
     private final AdminOrdersRepository ordersRepository;
     private final ExternalIdGenerator externalIdGenerator;
     private final HerbsRepository herbsRepository;
@@ -101,12 +103,14 @@ public class AdminOrderController {
 
     @Autowired
     public AdminOrderController(
+        AdminOrderBatchesRepository orderBatchesRepository,
         AdminOrdersRepository ordersRepository,
         @Qualifier("ordersExternalIdGenerator") ExternalIdGenerator externalIdGenerator,
         HerbsRepository herbsRepository,
         BillRepository billRepository,
         JavaMailSender mailSender,
         Validator validator) {
+        this.orderBatchesRepository = orderBatchesRepository;
         this.ordersRepository = ordersRepository;
         this.externalIdGenerator = externalIdGenerator;
         this.herbsRepository = herbsRepository;
@@ -117,24 +121,27 @@ public class AdminOrderController {
 
     @PutMapping(consumes = "application/json", path = "/{externalOrderId}")
     @Transactional
-    public ResponseEntity<AdminOrderDto> updateOrder(@RequestBody AdminOrderDto orderDto, @PathVariable String externalOrderId) {
+    public ResponseEntity<AdminOrderDto> updateOrder(@PathVariable String externalOrderBatchId, @RequestBody AdminOrderDto orderDto, @PathVariable String externalOrderId) {
         Set<ConstraintViolation<AdminOrderDto>> violations = validator.validate(orderDto);
         if (!violations.isEmpty()) {
             throw new ValidationException(violations.toString());
         }
+        OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException("Order Batch " + externalOrderBatchId + " not found"));
         Order foundOrder = ordersRepository.findByExternalId(externalOrderId)
-            .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
-        Order savedOrder = addOrUpdateOrder(orderDto, foundOrder);
+            .orElseThrow(() -> new EntityNotFoundException("Order " + externalOrderId + " not found"));
+        Order savedOrder = addOrUpdateOrder(orderBatch, orderDto, foundOrder);
         AdminOrderDto savedOrderDto = AdminOrderDto.from(savedOrder, null);
         return ResponseEntity
             .ok(savedOrderDto);
     }
 
-    private Order addOrUpdateOrder(AdminOrderDto orderDto, Order oldOrder) {
+    private Order addOrUpdateOrder(OrderBatch orderBatch, AdminOrderDto orderDto, Order oldOrder) {
         Order order;
         if (oldOrder == null) {
             order = createOrderFrom(orderDto);
             order.setId(null);
+            order.setOrderBatch(orderBatch);
             order.setExternalId(externalIdGenerator.generate());
         } else {
             order = oldOrder;
@@ -187,7 +194,7 @@ public class AdminOrderController {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(order.getMail());
         message.setBcc(BCC_ADDRESS);
-        message.setSubject(MAIL_TITLE);
+        message.setSubject(order.getOrderBatch().getName());
         message.setText(mailBody);
         mailSender.send(message);
     }
@@ -195,7 +202,7 @@ public class AdminOrderController {
     private static String generateMailBody(Order order, boolean isUpdate) {
         String mailBodyTemplate = getOperationSpecificTemplate(isUpdate);
         String herbsList = generateHerbsList(order);
-        return mailBodyTemplate.formatted(order.getFirstName(), herbsList, order.getExternalId());
+        return mailBodyTemplate.formatted(order.getFirstName(), herbsList, order.getOrderBatch().getExternalId(), order.getExternalId());
     }
 
     private static String getOperationSpecificTemplate(boolean isUpdate) {
@@ -211,7 +218,7 @@ public class AdminOrderController {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(order.getMail());
         message.setBcc(BCC_ADDRESS);
-        message.setSubject(MAIL_TITLE);
+        message.setSubject(order.getOrderBatch().getName());
         message.setText(mailBody);
         mailSender.send(message);
     }
@@ -239,7 +246,11 @@ public class AdminOrderController {
     }
 
     @GetMapping(path = "/{externalOrderId}")
-    public ResponseEntity<AdminOrderDto> getHerbOrder(@PathVariable String externalOrderId) {
+    public ResponseEntity<AdminOrderDto> getHerbOrder(@PathVariable String externalOrderBatchId, @PathVariable String externalOrderId) {
+        orderBatchesRepository.findByExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
+        Order order = ordersRepository.findByExternalId(externalOrderId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
         Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
         Map<Long, BillHerbItem> billHerbItems = billOpt
             .map(bill ->
@@ -248,8 +259,6 @@ public class AdminOrderController {
             )
             .orElseGet(HashMap::new);
 
-        Order order = ordersRepository.findByExternalId(externalOrderId)
-            .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
         Long totalPriceWithVat = calculatePrice(order, billHerbItems, billOpt);
         AdminOrderDto orderDto = AdminOrderDto.from(order, totalPriceWithVat);
         return ResponseEntity.ok()
@@ -259,7 +268,10 @@ public class AdminOrderController {
     private static final BillHerbItem EMPTY_BILL_HERB_ITEM = new BillHerbItem(null, null, 0, null);
 
     @GetMapping
-    public ResponseEntity<List<AdminOrderDto>> getHerbOrders() {
+    public ResponseEntity<List<AdminOrderDto>> getHerbOrders(@PathVariable String externalOrderBatchId) {
+        OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
+
         Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
         Map<Long, BillHerbItem> billHerbItems = billOpt
             .map(bill ->
@@ -268,7 +280,7 @@ public class AdminOrderController {
             )
             .orElseGet(HashMap::new);
 
-        List<AdminOrderDto> orderDtos = ordersRepository.findAll()
+        List<AdminOrderDto> orderDtos = ordersRepository.findByOrderBatch(orderBatch)
             .stream()
             .map(order -> {
                 Long totalPriceWithVat = calculatePrice(order, billHerbItems, billOpt);
@@ -312,7 +324,10 @@ public class AdminOrderController {
     }
 
     @PostMapping(path = "/price-mails")
-    public ResponseEntity<Void> sendPriceMails() {
+    public ResponseEntity<Void> sendPriceMails(@PathVariable String externalOrderBatchId) {
+        OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
+            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
+
         Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
         Map<Long, BillHerbItem> billHerbItems = billOpt
             .map(bill ->
@@ -321,7 +336,7 @@ public class AdminOrderController {
             )
             .orElseGet(HashMap::new);
 
-        ordersRepository.findAll()
+        ordersRepository.findByOrderBatch(orderBatch)
             .forEach(order -> {
                 Long totalPriceWithVat = calculatePrice(order, billHerbItems, billOpt);
                 sendPriceMail(order, totalPriceWithVat);

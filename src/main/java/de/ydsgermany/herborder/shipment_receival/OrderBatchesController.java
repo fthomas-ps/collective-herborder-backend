@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(path = "/admin/order_batches")
+@RequestMapping(path = "/admin/order_batches/{externalOrderBatchId}")
 @Slf4j
 public class OrderBatchesController {
 
@@ -27,7 +27,7 @@ public class OrderBatchesController {
         this.orderBatchesAggregationRepository = orderBatchesAggregationRepository;
     }
 
-    @GetMapping(path = "/{externalOrderBatchId}/stats")
+    @GetMapping(path = "/stats")
     public ResponseEntity<List<AggregatedHerbItemsDto>> getShipmentReceivalOverview(
         @PathVariable String externalOrderBatchId) {
         OrderBatch orderBatch = orderBatchesAggregationRepository.findByExternalId(externalOrderBatchId)
@@ -38,13 +38,11 @@ public class OrderBatchesController {
             .body(aggregatedHerbItemsDtos);
     }
 
-    @GetMapping(path = "/{externalOrderBatchId}/missing-herbs")
+    @GetMapping(path = "/missing-herbs")
     public ResponseEntity<List<MissingHerbsDto>> getMissingHerbs(
         @PathVariable String externalOrderBatchId) {
-        OrderBatch orderBatch = orderBatchesAggregationRepository.findAll().stream().findFirst()
-            .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
         List<MissingHerbsDto> missingHerbsDto = orderBatchesAggregationRepository.findMissingHerbs(
-            orderBatch.getId());
+            externalOrderBatchId);
         return ResponseEntity.ok()
             .body(missingHerbsDto);
     }
