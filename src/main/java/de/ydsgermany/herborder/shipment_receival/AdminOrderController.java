@@ -251,7 +251,7 @@ public class AdminOrderController {
             .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
         Order order = ordersRepository.findByExternalId(externalOrderId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
-        Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
+        Optional<Bill> billOpt = billRepository.findByOrderBatchExternalId(externalOrderBatchId).stream().findFirst();
         Map<Long, BillHerbItem> billHerbItems = billOpt
             .map(bill ->
                 bill.getHerbs().stream()
@@ -272,7 +272,7 @@ public class AdminOrderController {
         OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
 
-        Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
+        Optional<Bill> billOpt = billRepository.findByOrderBatchExternalId(externalOrderBatchId).stream().findFirst();
         Map<Long, BillHerbItem> billHerbItems = billOpt
             .map(bill ->
                 bill.getHerbs().stream()
@@ -309,7 +309,7 @@ public class AdminOrderController {
     public ResponseEntity<Void> sendPriceMail(@PathVariable String externalOrderId) {
         Order foundOrder = ordersRepository.findByExternalId(externalOrderId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order %s not found", externalOrderId)));
-        Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
+        Optional<Bill> billOpt = billRepository.findByOrderBatchExternalId(externalOrderId).stream().findFirst();
         Map<Long, BillHerbItem> billHerbItems = billOpt
             .map(bill ->
                 bill.getHerbs().stream()
@@ -328,7 +328,7 @@ public class AdminOrderController {
         OrderBatch orderBatch = orderBatchesRepository.findByExternalId(externalOrderBatchId)
             .orElseThrow(() -> new EntityNotFoundException(format("Order Batch %s not found", externalOrderBatchId)));
 
-        Optional<Bill> billOpt = billRepository.findAll().stream().findFirst();
+        Optional<Bill> billOpt = billRepository.findByOrderBatchExternalId(externalOrderBatchId).stream().findFirst();
         Map<Long, BillHerbItem> billHerbItems = billOpt
             .map(bill ->
                 bill.getHerbs().stream()
