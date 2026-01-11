@@ -340,6 +340,11 @@ public class AdminOrderController {
             .forEach(order -> {
                 Long totalPriceWithVat = calculatePrice(order, billHerbItems, billOpt);
                 sendPriceMail(order, totalPriceWithVat);
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    log.error("Error in delaying sending mails", e);
+                }
             });
         return ResponseEntity.ok().build();
     }
