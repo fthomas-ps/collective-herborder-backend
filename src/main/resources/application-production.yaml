@@ -28,3 +28,8 @@ flyway.datasource:
   url: jdbc:postgresql://herbs.postgres.database.azure.com:5432/herborders
   username: flyway-user
   password: flyway-password
+
+orders:
+  price-mail:
+    delay-in-ms: 500
+

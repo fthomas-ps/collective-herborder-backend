@@ -29,3 +29,7 @@ flyway.datasource:
   username: postgres
   password: postgres
 
+orders:
+  price-mail:
+    delay-in-ms: 11000
+

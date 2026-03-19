@@ -25,6 +25,7 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -76,7 +77,7 @@ public class AdminOrderController {
         
         Es ist soweit. Für deine Kräuterbestellung sind Kosten in Höhe von %s € angefallen.
 
-        Bitte überweise diesen Betrag auf mein Konto:
+        Bitte überweise diesen Betrag bis zum 15.01.2026 auf mein Konto:
 
         Marion Zehe
 
@@ -101,6 +102,8 @@ public class AdminOrderController {
     private final JavaMailSender mailSender;
     private final Validator validator;
 
+    private final int delayBetweenMailsInMs;
+
     @Autowired
     public AdminOrderController(
         AdminOrderBatchesRepository orderBatchesRepository,
@@ -109,7 +112,8 @@ public class AdminOrderController {
         HerbsRepository herbsRepository,
         BillRepository billRepository,
         JavaMailSender mailSender,
-        Validator validator) {
+        Validator validator,
+        @Value("${orders.price-mail.delay-in-ms}") int delayBetweenMailsInMs) {
         this.orderBatchesRepository = orderBatchesRepository;
         this.ordersRepository = ordersRepository;
         this.externalIdGenerator = externalIdGenerator;
@@ -117,6 +121,7 @@ public class AdminOrderController {
         this.billRepository = billRepository;
         this.mailSender = mailSender;
         this.validator = validator;
+        this.delayBetweenMailsInMs = delayBetweenMailsInMs;
     }
 
     @PutMapping(consumes = "application/json", path = "/{externalOrderId}")
@@ -341,7 +346,7 @@ public class AdminOrderController {
                 Long totalPriceWithVat = calculatePrice(order, billHerbItems, billOpt);
                 sendPriceMail(order, totalPriceWithVat);
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(delayBetweenMailsInMs);
                 } catch (InterruptedException e) {
                     log.error("Error in delaying sending mails", e);
                 }
