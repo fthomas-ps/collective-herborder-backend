@@ -8,6 +8,7 @@ trigger:
 
 variables:
   - name: PRODUCTION_SSH_ENDPOINT
+    value: 'test'
   - name: PRODUCTION_SERVER_PRIVATE_KEY
   - name: PRODUCTION_SSH_USER
   - name: PRODUCTION_TARGET_FOLDER
@@ -19,7 +20,7 @@ pool:
 
 steps:
 
-- bash: echo production_ssh_endpoint ${PRODUCTION_SSH_ENDPOINT}
+- bash: echo production_ssh_endpoint $(PRODUCTION_SSH_ENDPOINT)
 
 - task: Maven@4
   inputs:
@@ -34,17 +35,17 @@ steps:
 
 - task: CopyFilesOverSSH@0
   inputs:
-    sshEndpoint: ${PRODUCTION_SSH_ENDPOINT}
+    sshEndpoint: $(PRODUCTION_SSH_ENDPOINT)
     sourceFolder: 'target/'
     contents: 'herborder.jar'
-    targetFolder: ${PRODUCTION_TARGET_FOLDER}
+    targetFolder: $(PRODUCTION_TARGET_FOLDER)
     readyTimeout: '20000'
     overwrite: true
     failOnEmptySource: true
 
 - task: SSH@0
   inputs:
-    sshEndpoint: ${PRODUCTION_SSH_ENDPOINT}
+    sshEndpoint: $(PRODUCTION_SSH_ENDPOINT)
     runOptions: 'commands'
     commands: 'sudo systemctl restart herborder.service'
     readyTimeout: '20000'
