@@ -6,6 +6,12 @@
 trigger:
 - main
 
+variables:
+  production_ssh_endpoint: placeholder
+  production_server_private_key: placeholder
+  production_ssh_user: placeholder
+  production_ssh_target_folder: placeholder
+
 pool:
   name: Default
   # This is required for Microsoft-hosted Pipeline agents
