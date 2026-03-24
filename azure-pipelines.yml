@@ -12,6 +12,7 @@ variables:
   - name: PRODUCTION_SERVER_PRIVATE_KEY
   - name: PRODUCTION_SSH_USER
   - name: PRODUCTION_TARGET_FOLDER
+    value: 'test'
 
 pool:
   name: Default
@@ -35,17 +36,17 @@ steps:
 
 - task: CopyFilesOverSSH@0
   inputs:
-    sshEndpoint: $(PRODUCTION_SSH_ENDPOINT)
+    sshEndpoint: 'herbs-app-server'
     sourceFolder: 'target/'
     contents: 'herborder.jar'
-    targetFolder: $(PRODUCTION_TARGET_FOLDER)
+    targetFolder: '$(PRODUCTION_TARGET_FOLDER)'
     readyTimeout: '20000'
     overwrite: true
     failOnEmptySource: true
 
 - task: SSH@0
   inputs:
-    sshEndpoint: $(PRODUCTION_SSH_ENDPOINT)
+    sshEndpoint: 'herbs-app-server'
     runOptions: 'commands'
     commands: 'sudo systemctl restart herborder.service'
     readyTimeout: '20000'
