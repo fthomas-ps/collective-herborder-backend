@@ -7,10 +7,10 @@ trigger:
 - main
 
 variables:
-  production_ssh_endpoint: placeholder
-  production_server_private_key: placeholder
-  production_ssh_user: placeholder
-  production_ssh_target_folder: placeholder
+  PRODUCTION_SSH_ENDPOINT: placeholder
+  PRODUCTION_SERVER_PRIVATE_KEY: placeholder
+  PRODUCTION_SSH_USER: placeholder
+  PRODUCTION_SSH_TARGET_FOLDER: placeholder
 
 pool:
   name: Default
@@ -18,6 +18,8 @@ pool:
   #vmImage: ubuntu-latest
 
 steps:
+
+- bash: echo production_ssh_endpoint $(PRODUCTION_SSH_ENDPOINT)
 - task: Maven@4
   inputs:
     mavenPomFile: 'pom.xml'
@@ -31,17 +33,17 @@ steps:
 
 - task: CopyFilesOverSSH@0
   inputs:
-    sshEndpoint: $PRODUCTION_SSH_ENDPOINT
+    sshEndpoint: $(PRODUCTION_SSH_ENDPOINT)
     sourceFolder: 'target/'
     contents: 'herborder.jar'
-    targetFolder: $PRODUCTION_TARGET_FOLDER
+    targetFolder: $(PRODUCTION_TARGET_FOLDER)
     readyTimeout: '20000'
     overwrite: true
     failOnEmptySource: true
 
 - task: SSH@0
   inputs:
-    sshEndpoint: $PRODUCTION_SSH_ENDPOINT
+    sshEndpoint: $(PRODUCTION_SSH_ENDPOINT)
     runOptions: 'commands'
     commands: 'sudo systemctl restart herborder.service'
     readyTimeout: '20000'
