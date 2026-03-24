@@ -31,7 +31,7 @@ steps:
     sshEndpoint: 'herbs-app-server'
     sourceFolder: 'target/'
     contents: 'herborder.jar'
-    targetFolder: '/opt/herborder'
+    targetFolder: '$(production_target_folder)'
     readyTimeout: '20000'
     overwrite: true
     failOnEmptySource: true
