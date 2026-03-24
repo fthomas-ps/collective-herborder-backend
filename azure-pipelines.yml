@@ -7,10 +7,10 @@ trigger:
 - main
 
 variables:
-  PRODUCTION_SSH_ENDPOINT: placeholder
-  PRODUCTION_SERVER_PRIVATE_KEY: placeholder
-  PRODUCTION_SSH_USER: placeholder
-  PRODUCTION_SSH_TARGET_FOLDER: placeholder
+  - name: PRODUCTION_SSH_ENDPOINT
+  - name: PRODUCTION_SERVER_PRIVATE_KEY
+  - name: PRODUCTION_SSH_USER
+  - name: PRODUCTION_SSH_TARGET_FOLDER
 
 pool:
   name: Default
