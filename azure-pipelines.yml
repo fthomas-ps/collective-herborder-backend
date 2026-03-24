@@ -21,7 +21,7 @@ pool:
 
 steps:
 
-- bash: echo production_ssh_endpoint $(PRODUCTION_SSH_ENDPOINT)
+- bash: echo production_target_folder $(PRODUCTION_TARGET_FOLDER)
 
 - task: Maven@4
   inputs:
