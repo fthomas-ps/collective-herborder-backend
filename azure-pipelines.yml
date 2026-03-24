@@ -13,8 +13,6 @@ pool:
 
 steps:
 
-- bash: echo production_target_folder $(production_target_folder)
-
 - task: Maven@4
   inputs:
     mavenPomFile: 'pom.xml'
