@@ -21,7 +21,7 @@ pool:
 
 steps:
 
-- bash: echo production_target_folder $env:PRODUCTION_TARGET_FOLDER
+- bash: echo production_target_folder $PRODUCTION_TARGET_FOLDER
 
 - task: Maven@4
   inputs:
