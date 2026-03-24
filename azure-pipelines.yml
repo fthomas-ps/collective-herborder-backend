@@ -6,14 +6,6 @@
 trigger:
 - main
 
-variables:
-  - name: PRODUCTION_SSH_ENDPOINT
-    value: 'test'
-  - name: PRODUCTION_SERVER_PRIVATE_KEY
-  - name: PRODUCTION_SSH_USER
-  - name: PRODUCTION_TARGET_FOLDER
-    value: 'test'
-
 pool:
   name: Default
   # This is required for Microsoft-hosted Pipeline agents
@@ -21,7 +13,7 @@ pool:
 
 steps:
 
-- bash: echo production_target_folder $PRODUCTION_TARGET_FOLDER
+- bash: echo production_target_folder $(production_target_folder)
 
 - task: Maven@4
   inputs:
