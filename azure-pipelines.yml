@@ -21,7 +21,7 @@ pool:
 
 steps:
 
-- bash: echo production_target_folder $(env:PRODUCTION_TARGET_FOLDER)
+- bash: echo production_target_folder $env:PRODUCTION_TARGET_FOLDER
 
 - task: Maven@4
   inputs:
@@ -39,7 +39,7 @@ steps:
     sshEndpoint: 'herbs-app-server'
     sourceFolder: 'target/'
     contents: 'herborder.jar'
-    targetFolder: '$(PRODUCTION_TARGET_FOLDER)'
+    targetFolder: '/opt/herborder'
     readyTimeout: '20000'
     overwrite: true
     failOnEmptySource: true
