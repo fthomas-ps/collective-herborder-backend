@@ -8,6 +8,7 @@ trigger:
 
 pool:
   name: Default
+  # This is required for Microsoft-hosted Pipeline agents
   #vmImage: ubuntu-latest
 
 steps:
@@ -21,3 +22,20 @@ steps:
     publishJUnitResults: true
     testResultsFiles: '**/surefire-reports/TEST-*.xml'
     goals: 'package'
+
+- task: CopyFilesOverSSH@0
+  inputs:
+    sshEndpoint: $PRODUCTION_SSH_ENDPOINT
+    sourceFolder: target/
+    contents: 'herborder.jar'
+    targetFolder: $PRODUCTION_TARGET_FOLDER
+    readyTimeout: '20000'
+    overwrite: true
+    failOnEmptySource: true
+
+- task: SSH@0
+  inputs:
+    sshEndpoint: $PRODUCTION_SSH_ENDPOINT
+    runOptions: 'commands'
+    commands: sudo systemctl resrtart herborder.service
+    readyTimeout: '20000'
