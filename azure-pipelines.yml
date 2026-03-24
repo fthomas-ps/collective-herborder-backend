@@ -31,17 +31,17 @@ steps:
 
 - task: CopyFilesOverSSH@0
   inputs:
-    sshEndpoint: '${PRODUCTION_SSH_ENDPOINT}'
+    sshEndpoint: $PRODUCTION_SSH_ENDPOINT
     sourceFolder: 'target/'
     contents: 'herborder.jar'
-    targetFolder: '${PRODUCTION_TARGET_FOLDER}'
+    targetFolder: $PRODUCTION_TARGET_FOLDER
     readyTimeout: '20000'
     overwrite: true
     failOnEmptySource: true
 
 - task: SSH@0
   inputs:
-    sshEndpoint: '${PRODUCTION_SSH_ENDPOINT}'
+    sshEndpoint: $PRODUCTION_SSH_ENDPOINT
     runOptions: 'commands'
     commands: 'sudo systemctl restart herborder.service'
     readyTimeout: '20000'
